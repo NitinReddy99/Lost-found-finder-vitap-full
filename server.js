@@ -5,13 +5,16 @@ const cors = require("cors");
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// ✅ health check (VERY IMPORTANT FOR RENDER)
 app.get("/", (req, res) => {
     res.send("Server is running");
 });
 
+// ✅ SAFE DATABASE (Render compatible)
 const db = new sqlite3.Database("/tmp/lostfound.db", (err) => {
     if (err) console.log(err);
-    else console.log("SQLite Connected ✅");
+    else console.log("SQLite Connected");
 });
 
 db.run(`
@@ -44,7 +47,7 @@ app.post("/add-lost", (req, res) => {
     });
 });
 
-// ADD FOUND (FINAL CORRECT LOGIC)
+// ADD FOUND
 app.post("/add-found", (req, res) => {
     const { category, brand, color, venue, desc, image } = req.body;
 
@@ -62,12 +65,10 @@ app.post("/add-found", (req, res) => {
 
         if (row) {
 
-            // 🔥 IF ALREADY FOUND
             if (row.status === "found") {
                 return res.json({ match: true, email: row.email });
             }
 
-            // 🔥 FIRST TIME MATCH
             db.run(
                 "UPDATE items SET status='found' WHERE id=?",
                 [row.id],
@@ -78,7 +79,6 @@ app.post("/add-found", (req, res) => {
             );
 
         } else {
-
             db.run(`
             INSERT INTO items (type, category, brand, color, venue, description, image, status)
             VALUES ('found', ?, ?, ?, ?, ?, ?, 'pending')
@@ -100,5 +100,6 @@ app.get("/items", (req, res) => {
     });
 });
 
+// ✅ PORT FIX (RENDER)
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log("Server running"));
+app.listen(PORT, () => console.log("Server running on port " + PORT));
