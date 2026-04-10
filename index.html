@@ -1,0 +1,263 @@
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VIT-AP Lost & Found Portal</title>
+
+    <style>
+        body { font-family: Arial; margin: 0; background: #e6e6e6; }
+
+        .container {
+            width: 400px;
+            margin: 80px auto;
+            background: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+
+        .header {
+            background: #004aad;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .form-box { padding: 25px; }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+        }
+
+        header {
+            background: #004aad;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        section {
+            background: white;
+            margin: 20px;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        img {
+            width: 120px;
+            margin-top: 10px;
+        }
+
+        #portal { display: none; }
+    </style>
+</head>
+
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage">
+    <div class="container">
+        <div class="header">Login – VIT-AP</div>
+        <div class="form-box">
+            <form id="loginForm">
+                <input type="text" id="username" placeholder="Student ID" required>
+                <input type="password" id="password" placeholder="Password" required>
+                <button>Login</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MAIN PORTAL -->
+<div id="portal">
+
+<header>
+    <h1>VIT-AP Lost & Found Portal</h1>
+</header>
+
+<section>
+<h2>Lost Item</h2>
+<form id="lostForm">
+
+<select id="lostCategory" required>
+<option value="">Select Category</option>
+<option>Mobile</option>
+<option>Laptop</option>
+<option>ID Card</option>
+<option>Wallet</option>
+<option>Bag</option>
+<option>Keys</option>
+</select>
+
+<input id="lostBrand" placeholder="Brand" required>
+<input id="lostColor" placeholder="Color" required>
+<input id="lostVenue" placeholder="Venue" required>
+<textarea id="lostDesc" placeholder="Description"></textarea>
+<input id="lostEmail" placeholder="Email" required>
+
+<input type="file" id="lostImage">
+
+<button>Submit</button>
+</form>
+</section>
+
+<section>
+<h2>Found Item</h2>
+<form id="foundForm">
+
+<select id="foundCategory" required>
+<option value="">Select Category</option>
+<option>Mobile</option>
+<option>Laptop</option>
+<option>ID Card</option>
+<option>Wallet</option>
+<option>Bag</option>
+<option>Keys</option>
+</select>
+
+<input id="foundBrand" placeholder="Brand" required>
+<input id="foundColor" placeholder="Color" required>
+<input id="foundVenue" placeholder="Venue" required>
+<textarea id="foundDesc" placeholder="Description"></textarea>
+
+<input type="file" id="foundImage">
+
+<button>Submit</button>
+</form>
+</section>
+
+<section>
+<h2>All Items</h2>
+<div id="itemsList"></div>
+</section>
+
+</div>
+
+<script>
+const API = "http://localhost:5000";
+
+const loginForm = document.getElementById("loginForm");
+const loginPage = document.getElementById("loginPage");
+const portal = document.getElementById("portal");
+const popup = document.getElementById("popup");
+const popupEmail = document.getElementById("popupEmail");
+const itemsList = document.getElementById("itemsList");
+
+loginForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    loginPage.style.display = "none";
+    portal.style.display = "block";
+    loadItems();
+});
+
+function showPopup(email) {
+    popupEmail.innerText = "Owner Email: " + email;
+    popup.style.display = "flex";
+}
+
+function closePopup() {
+    popup.style.display = "none";
+}
+
+// ADD LOST
+document.getElementById("lostForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    let data = {
+        category: document.getElementById("lostCategory").value,
+        brand: document.getElementById("lostBrand").value,
+        color: document.getElementById("lostColor").value,
+        venue: document.getElementById("lostVenue").value,
+        desc: document.getElementById("lostDesc").value,
+        email: document.getElementById("lostEmail").value,
+        image: ""
+    };
+
+    await fetch("http://localhost:5000/add-lost", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(data)
+    });
+
+    alert("Lost item added");
+    this.reset();
+    loadItems();
+});
+
+// ADD FOUND
+document.getElementById("foundForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    let data = {
+        category: document.getElementById("foundCategory").value,
+        brand: document.getElementById("foundBrand").value,
+        color: document.getElementById("foundColor").value,
+        venue: document.getElementById("foundVenue").value,
+        desc: document.getElementById("foundDesc").value,
+        image: ""
+    };
+
+    try {
+        let res = await fetch("http://localhost:5000/add-found", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify(data)
+        });
+
+        let result = await res.json();
+
+        console.log(result); // DEBUG
+
+        if (result.match === true) {
+            showPopup(result.email);
+        } else {
+            alert("No match found");
+        }
+
+    } catch (err) {
+    console.error(err);
+    alert("Item found please contact the owner");
+
+}
+if (result.match) {
+    showPopup(result.email);
+}
+
+    this.reset();
+    loadItems();
+});
+
+// LOAD ITEMS
+async function loadItems() {
+    let res = await fetch(API + "/items");
+    let items = await res.json();
+
+    itemsList.innerHTML = "";
+
+    items.forEach(item => {
+        let div = document.createElement("div");
+        div.className = "item";
+
+        div.innerHTML = `
+            <h3>${item.type.toUpperCase()} - ${item.category}</h3>
+            <p>Brand: ${item.brand}</p>
+            <p>Color: ${item.color}</p>
+            <p>Venue: ${item.venue}</p>
+            <p>Description: ${item.description}</p>
+            ${item.email ? `<p><b>Email:</b> ${item.email}</p>` : ""}
+            <p>Status: ${item.status}</p>
+        `;
+
+        itemsList.appendChild(div);
+    });
+}
+</script></body>
+</html>
+```
