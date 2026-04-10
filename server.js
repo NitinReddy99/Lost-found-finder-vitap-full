@@ -3,8 +3,16 @@ const sqlite3 = require("sqlite3").verbose();
 const cors = require("cors");
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+    origin: "*",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"]
+}));
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "*");
+    next();
+});app.use(express.json());
 
 // ✅ health check (VERY IMPORTANT FOR RENDER)
 app.get("/", (req, res) => {
