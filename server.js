@@ -5,8 +5,11 @@ const cors = require("cors");
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.get("/", (req, res) => {
+    res.send("Server is running");
+});
 
-const db = new sqlite3.Database("lostfound.db", (err) => {
+const db = new sqlite3.Database("./lostfound.db", (err) => {
     if (err) console.log(err);
     else console.log("SQLite Connected ✅");
 });
