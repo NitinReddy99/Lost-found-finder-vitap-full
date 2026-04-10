@@ -9,7 +9,7 @@ app.get("/", (req, res) => {
     res.send("Server is running");
 });
 
-const db = new sqlite3.Database("./lostfound.db", (err) => {
+const db = new sqlite3.Database("/tmp/lostfound.db", (err) => {
     if (err) console.log(err);
     else console.log("SQLite Connected ✅");
 });
